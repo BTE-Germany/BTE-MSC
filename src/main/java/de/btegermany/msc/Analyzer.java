@@ -7,9 +7,12 @@ import net.buildtheearth.terraminusminus.projection.OutOfProjectionBoundsExcepti
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.logging.Level;
 
 public class Analyzer {
@@ -42,33 +45,35 @@ public class Analyzer {
         ArrayList<String> foundLocationsList = new ArrayList<>();
 
         for(String regionFileName : getRegionFileNames()){
-            regionFileSize++;
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
-            double[] latLon;
-            try {
-                latLon = Converter.toGeo(xy);
-            } catch (OutOfProjectionBoundsException e) {
-                throw new AnalyzerException("Out of Projection Bounds. This should not happen. Please report this to the BTE Team.");
-            }
-            String location = null;
-            switch (analyzeCriteriaDropdown.getSelectedItem().toString()){
-                case "Continent":
-                    location = Utils.getOfflineLocation(latLon[0],latLon[1]).getContinent();
-                    break;
-                case "Country":
-                    location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCountry();
-                    break;
-                case "State/Province":
-                    location = Utils.getOfflineLocation(latLon[0],latLon[1]).getState();
-                    break;
-                case "City":
-                    location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCity();
-                    break;
-            }
+            if((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
+                regionFileSize++;
+                double[] latLon;
+                try {
+                    latLon = Converter.toGeo(xy);
+                } catch (OutOfProjectionBoundsException e) {
+                    throw new AnalyzerException("Out of Projection Bounds: "+ xy[0]+","+xy[1] +" This should not happen. Please report this to the BTE Team.");
+                }
+                String location = null;
+                switch (analyzeCriteriaDropdown.getSelectedItem().toString()){
+                    case "Continent":
+                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getContinent();
+                        break;
+                    case "Country":
+                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCountry();
+                        break;
+                    case "State/Province":
+                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getState();
+                        break;
+                    case "City":
+                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCity();
+                        break;
+                }
 
-            System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
+                System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
 
-            foundLocationsList.add(location);
+                foundLocationsList.add(location);
+            }
         }
 
         ArrayList<String> foundLocationsListReduced = new ArrayList<>();
@@ -88,8 +93,10 @@ public class Analyzer {
 
             JButton jButton = new JButton("Select world");
             jButton.setEnabled(false);
-            int percentage = countFilesForLocation(location,foundLocationsList) / regionFileSize  * 100;
-            foundLocationsListEntryList.add(new LocationListEntry(new JLabel(location),percentage,new JLabel(regionFileSize + "x"),jComboBox,jButton));
+            int amountFilesForLocation = countFilesForLocation(location,foundLocationsList);
+            double percentage = (double) amountFilesForLocation / regionFileSize * 100;
+            System.out.println(amountFilesForLocation + " " + regionFileSize + " " + percentage);
+            foundLocationsListEntryList.add(new LocationListEntry(new JLabel(location),(int) percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
             MSC.logger.log(Level.INFO,+percentage+"% of the region files are in " + location+".");
         }
 
@@ -98,6 +105,21 @@ public class Analyzer {
         foundLocations.getColumnModel().getColumn(3).setCellEditor(new MyComboBoxEditor());
         foundLocations.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         foundLocations.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor());
+
+        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(foundLocations.getModel());
+
+
+
+        List<RowSorter.SortKey> sortKeys = new ArrayList<>(25);
+        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
+        sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
+        sortKeys.add(new RowSorter.SortKey(2, SortOrder.ASCENDING));
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+        foundLocations.setRowSorter(sorter);
+
+        //foundLocations.setAutoCreateRowSorter(true);
+
 
         MSC.logger.log(Level.INFO,"Found "+regionFileSize+" Region Files.");
 
