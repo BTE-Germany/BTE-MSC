@@ -49,6 +49,7 @@ public class ButtonEditor extends DefaultCellEditor {
             button.setBackground(table.getBackground());
         }
         label = (value == null) ? "" : value.toString();
+        button.setHorizontalAlignment(SwingConstants.CENTER);
         button.setText(label);
         isPushed = true;
         return button;

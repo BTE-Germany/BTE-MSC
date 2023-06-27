@@ -25,16 +25,14 @@ public class Analyzer {
         this.worldFolder = worldFolder;
         this.analyzeButton = analyzeButton;
         this.frame = frame;
+        isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
 
         loadingForm = new LoadingForm(frame);
-        loadingForm.progressBar.setValue(50);
+        loadingForm.LoadingForm.setVisible(true);
+        loadingForm.progressBar.setMaximum(getRegionDirFileCount());
 
         analyzeButton.setEnabled(false);
         analyzeButton.setText("Analyzing...");
-
-
-        isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
-
 
         MSC.logger.log(Level.INFO,"Analyzing Files in "+worldTypeDropdown.getSelectedItem()+" Format.");
 
@@ -59,13 +57,16 @@ public class Analyzer {
 
             JButton jButton = new JButton("Select world");
             jButton.setEnabled(false);
+
             int amountFilesForLocation = countFilesForLocation(location,foundLocationsList);
             double percentage = (double) amountFilesForLocation / regionFileSize * 100;
-            System.out.println(amountFilesForLocation + " " + regionFileSize + " " + percentage);
+
             JLabel criteria = new JLabel();
             criteria.setName(analyzeCriteriaDropdown.getSelectedItem().toString());
             criteria.setText(location);
+            
             foundLocationsListEntryList.add(new LocationListEntry(criteria,percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
+
             MSC.logger.log(Level.INFO,+percentage+"% of the region files are in " + location+".");
         }
 
@@ -85,6 +86,7 @@ public class Analyzer {
 
         // Create the table model and insert data via parameter
         LocationListEntryTableModel locationListEntryTableModel = new LocationListEntryTableModel(foundLocationsListEntryList);
+        foundLocationsTable.setModel(locationListEntryTableModel);
 
         // Sort the table
         TableRowSorter tableRowSorter = locationListEntryTableModel.getTableRowSorter(locationListEntryTableModel);
