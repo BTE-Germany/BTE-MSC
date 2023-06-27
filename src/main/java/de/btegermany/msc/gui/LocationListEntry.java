@@ -5,11 +5,9 @@ import javax.swing.*;
 public class LocationListEntry {
 
     private JLabel location;
-
     private double percentage;
     private JLabel amount;
     private JComboBox<String> comboBox;
-
     JButton world;
 
     public LocationListEntry(JLabel location,double percentage, JLabel amount, JComboBox<String> comboBox, JButton world) {

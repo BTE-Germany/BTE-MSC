@@ -18,15 +18,23 @@ public class ButtonEditor extends DefaultCellEditor {
     private String label;
     private boolean isPushed;
 
-    public ButtonEditor() {
+    public ButtonEditor(LocationListEntryTableModel locationListEntryTableModel, int selectedRow){
         super(new JCheckBox());
         button = new JButton();
         button.setOpaque(true);
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                fireEditingStopped();
+        button.addActionListener(e -> {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setCurrentDirectory(new File(Utils.getMinecraftDir("buildtheearth").toFile().getAbsolutePath() + "/saves"));
+
+
+            int returnVal = chooser.showOpenDialog(null);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                //MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
+                locationListEntryTableModel.setValueAt(chooser.getSelectedFile().getAbsolutePath(),selectedRow,4);
+                button.setText(chooser.getSelectedFile().getName());
             }
+            fireEditingStopped();
         });
     }
 
@@ -49,16 +57,7 @@ public class ButtonEditor extends DefaultCellEditor {
     @Override
     public Object getCellEditorValue() {
         if (isPushed) {
-            JFileChooser chooser = new JFileChooser();
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            chooser.setCurrentDirectory(new File(Utils.getMinecraftDir("buildtheearth").toFile().getAbsolutePath() + "/saves"));
 
-
-            int returnVal = chooser.showOpenDialog(null);
-            if(returnVal == JFileChooser.APPROVE_OPTION) {
-            //MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
-                button.setText(chooser.getSelectedFile().getName());
-            }
         }
         isPushed = false;
         return label;

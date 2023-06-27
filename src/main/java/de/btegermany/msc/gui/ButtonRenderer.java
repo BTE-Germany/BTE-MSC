@@ -20,9 +20,10 @@ public class ButtonRenderer extends JButton implements TableCellRenderer {
             setBackground(table.getSelectionBackground());
         } else {
             setForeground(table.getForeground());
-            setBackground(UIManager.getColor("Button.background"));
+            setBackground(table.getBackground());
         }
         setText((value == null) ? "" : value.toString());
+        setHorizontalTextPosition(SwingConstants.CENTER);
         return this;
     }
 }

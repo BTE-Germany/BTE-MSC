@@ -25,7 +25,7 @@ public class MSC {
 
         frame.setContentPane(new MainForm(frame).MainFormPanel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 400);
+        frame.setSize(700, 600);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
