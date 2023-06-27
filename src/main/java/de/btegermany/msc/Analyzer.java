@@ -151,6 +151,7 @@ public class Analyzer {
     private int countFilesForLocation(String countlocation, ArrayList<String> foundLocationsList){
         int count = 0;
         for(String location : foundLocationsList){
+            if(location == null) continue;
             if(location.equals(countlocation)){
                 count++;
             }
