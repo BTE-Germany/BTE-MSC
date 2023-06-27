@@ -1,7 +1,7 @@
 <br/>
 <p align="center">
   <a href="https://github.com/bte-germany/BTE-MSC">
-    <img src="src/main/resources/logo.png" alt="Logo" width="80" height="80">
+    <img src="src/main/resources/logo.png" alt="Logo" width="300" height="300">
   </a>
 
   <h3 align="center">BuildTheEarth MSC</h3>
