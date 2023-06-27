@@ -34,6 +34,7 @@ public class MainForm {
             if(returnVal == JFileChooser.APPROVE_OPTION) {
                 MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
                 selectedWorldLabel.setText(chooser.getSelectedFile().getAbsolutePath());
+                worldSelectorButton.setText("Change World");
                 analyzeButton.setEnabled(true);
             }
         });

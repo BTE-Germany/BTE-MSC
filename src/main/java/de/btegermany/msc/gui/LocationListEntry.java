@@ -6,14 +6,13 @@ public class LocationListEntry {
 
     private JLabel location;
 
-    private int percentage;
+    private double percentage;
     private JLabel amount;
     private JComboBox<String> comboBox;
 
-
     JButton world;
 
-    public LocationListEntry(JLabel location,int percentage, JLabel amount, JComboBox<String> comboBox, JButton world) {
+    public LocationListEntry(JLabel location,double percentage, JLabel amount, JComboBox<String> comboBox, JButton world) {
         this.location = location;
         this.percentage = percentage;
         this.amount = amount;
@@ -37,11 +36,11 @@ public class LocationListEntry {
         this.world = world;
     }
 
-    public void setPercentage(int percentage) {
+    public void setPercentage(double percentage) {
         this.percentage = percentage;
     }
 
-    public int getPercentage() {
+    public double getPercentage() {
         return percentage;
     }
 

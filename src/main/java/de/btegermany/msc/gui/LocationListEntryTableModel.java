@@ -1,12 +1,8 @@
 package de.btegermany.msc.gui;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellEditor;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class LocationListEntryTableModel extends AbstractTableModel {
 
@@ -19,7 +15,7 @@ public class LocationListEntryTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int column) {
         return switch (column) {
-            case 0 -> "Location";
+            case 0 -> foundLocationsList.get(0).getLocation().getName();
             case 1 -> "%";
             case 2 -> "Amount";
             case 3 -> "Action";
@@ -42,7 +38,7 @@ public class LocationListEntryTableModel extends AbstractTableModel {
     public Object getValueAt(int rowIndex, int columnIndex) {
         return switch (columnIndex) {
             case 0 -> foundLocationsList.get(rowIndex).getLocation().getText();
-            case 1 -> foundLocationsList.get(rowIndex).getPercentage();
+            case 1 -> Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", foundLocationsList.get(rowIndex).getPercentage()));
             case 2 -> foundLocationsList.get(rowIndex).getAmount().getText();
             case 3 -> foundLocationsList.get(rowIndex).getComboBox().getSelectedItem();
             case 4 -> foundLocationsList.get(rowIndex).getWorld().getText();

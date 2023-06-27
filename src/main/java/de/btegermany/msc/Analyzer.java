@@ -6,13 +6,12 @@ import net.buildtheearth.terraminusminus.generator.EarthGeneratorSettings;
 import net.buildtheearth.terraminusminus.projection.OutOfProjectionBoundsException;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 
 public class Analyzer {
@@ -36,6 +35,7 @@ public class Analyzer {
 
         analyzeButton.setEnabled(false);
         analyzeButton.setText("Analyzing...");
+
 
         isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
 
@@ -86,40 +86,61 @@ public class Analyzer {
         ArrayList<LocationListEntry> foundLocationsListEntryList = new ArrayList<>();
         for(String location : foundLocationsListReduced){
             JComboBox jComboBox = new JComboBox();
-            jComboBox.addItem("Extract location files to");
             jComboBox.addItem("Do nothing");
-            jComboBox.addItem("Delete location files from world");
-
 
             JButton jButton = new JButton("Select world");
             jButton.setEnabled(false);
             int amountFilesForLocation = countFilesForLocation(location,foundLocationsList);
             double percentage = (double) amountFilesForLocation / regionFileSize * 100;
             System.out.println(amountFilesForLocation + " " + regionFileSize + " " + percentage);
-            foundLocationsListEntryList.add(new LocationListEntry(new JLabel(location),(int) percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
+            JLabel criteria = new JLabel();
+            criteria.setName(analyzeCriteriaDropdown.getSelectedItem().toString());
+            criteria.setText(location);
+            foundLocationsListEntryList.add(new LocationListEntry(criteria,percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
             MSC.logger.log(Level.INFO,+percentage+"% of the region files are in " + location+".");
         }
 
-        foundLocations.setModel(new LocationListEntryTableModel(foundLocationsListEntryList));
+        LocationListEntryTableModel locationListEntryTableModel = new LocationListEntryTableModel(foundLocationsListEntryList);
 
-        foundLocations.getColumnModel().getColumn(3).setCellEditor(new MyComboBoxEditor());
+        // Sort the table
+        TableRowSorter tableRowSorter = new TableRowSorter(locationListEntryTableModel);
+        tableRowSorter.setComparator(1, (value1, value2) -> {
+                    Double number1 = (Double) value1;
+                    Double number2 = (Double) value2;
+                    return Double.compare(number1, number2);
+                });
+        tableRowSorter.setComparator(2, (value1, value2) -> {
+            int number1 = Integer.parseInt(((String) value1).replace("x",""));
+            int number2 = Integer.parseInt(((String) value2).replace("x",""));
+            return Integer.compare(number1, number2);
+        });
+        tableRowSorter.setComparator(0, (value1, value2) -> {
+            String string1 = (String) value1;
+            String string2 = (String) value2;
+            return string1.compareTo(string2);
+        });
+        tableRowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(1, SortOrder.DESCENDING)));
+        foundLocations.setModel(locationListEntryTableModel);
+        foundLocations.setRowSorter(tableRowSorter);
+
+        // Align the numbers to the right
+        DefaultTableCellRenderer rightAlignmentRenderer = new DefaultTableCellRenderer();
+        rightAlignmentRenderer.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        //foundLocations.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        JComboBox comboBox = new JComboBox();
+        comboBox.addItem("Do nothing");
+        comboBox.addItem("Extract location files to");
+        comboBox.addItem("Delete location files from world");
+
+        foundLocations.getColumnModel().getColumn(1).setCellRenderer(rightAlignmentRenderer);
+        foundLocations.getColumnModel().getColumn(1).setPreferredWidth(15);
+        foundLocations.getColumnModel().getColumn(2).setCellRenderer(rightAlignmentRenderer);
+        foundLocations.getColumnModel().getColumn(2).setPreferredWidth(25);
+        foundLocations.getColumnModel().getColumn(3).setCellEditor(new DefaultCellEditor(comboBox));
+        foundLocations.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer());
         foundLocations.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
         foundLocations.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor());
-
-        TableRowSorter<TableModel> sorter = new TableRowSorter<TableModel>(foundLocations.getModel());
-
-
-
-        List<RowSorter.SortKey> sortKeys = new ArrayList<>(25);
-        sortKeys.add(new RowSorter.SortKey(0, SortOrder.ASCENDING));
-        sortKeys.add(new RowSorter.SortKey(1, SortOrder.ASCENDING));
-        sortKeys.add(new RowSorter.SortKey(2, SortOrder.ASCENDING));
-        sorter.setSortKeys(sortKeys);
-        sorter.sort();
-        foundLocations.setRowSorter(sorter);
-
-        //foundLocations.setAutoCreateRowSorter(true);
-
 
         MSC.logger.log(Level.INFO,"Found "+regionFileSize+" Region Files.");
 
