@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="de.btegermany.msc.LoadingForm">
-  <grid id="27dc6" binding="LoadingForm" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="LoadingForm" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="172"/>
+      <xy x="20" y="20" width="499" height="350"/>
     </constraints>
-    <properties/>
+    <properties>
+      <minimumSize width="170" height="350"/>
+      <preferredSize width="170" height="350"/>
+    </properties>
     <border type="none"/>
     <children>
       <component id="d898" class="javax.swing.JProgressBar" binding="progressBar">
@@ -31,19 +34,29 @@
           <text value="Analyzing world"/>
         </properties>
       </component>
-      <scrollpane id="b25e0">
+      <scrollpane id="b25e0" binding="progressLogScrollPane">
         <constraints>
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
-          <component id="56a45" class="javax.swing.JTextArea" binding="textArea1" default-binding="true">
+          <component id="56a45" class="javax.swing.JTextArea" binding="progressLog">
             <constraints/>
-            <properties/>
+            <properties>
+              <editable value="false"/>
+            </properties>
           </component>
         </children>
       </scrollpane>
+      <component id="e533" class="javax.swing.JButton" binding="progressFinishedButton">
+        <constraints>
+          <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Ok"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

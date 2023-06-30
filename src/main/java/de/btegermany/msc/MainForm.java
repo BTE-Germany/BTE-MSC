@@ -13,10 +13,14 @@ public class MainForm {
     private JComboBox analyzerCriteriaDropdown;
     private JTable foundLocations;
     private JButton runMSCButton;
+    private JLabel totalRegionFileAmount;
+    private JLabel totalSpace;
+    private JButton moreAnalyticsButton;
 
     private Analyzer analyzer;
 
     public MainForm(JFrame frame){
+        moreAnalyticsButton.setVisible(false);
         runMSCButton.setVisible(false);
         worldTypeDropdown.addItem("CubicChunks");
         worldTypeDropdown.addItem("Vanilla/Anvil");
@@ -42,7 +46,7 @@ public class MainForm {
         });
 
         analyzeButton.addActionListener(e -> {
-           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton);
+           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton, totalRegionFileAmount, totalSpace);
         });
 
 

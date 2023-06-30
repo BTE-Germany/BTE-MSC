@@ -2,7 +2,6 @@ package de.btegermany.msc;
 
 import de.btegermany.msc.exceptions.AnalyzerException;
 import de.btegermany.msc.gui.*;
-import net.buildtheearth.terraminusminus.generator.EarthGeneratorSettings;
 import net.buildtheearth.terraminusminus.projection.OutOfProjectionBoundsException;
 
 import javax.swing.*;
@@ -12,7 +11,7 @@ import java.io.File;
 import java.util.*;
 import java.util.logging.Level;
 
-public class Analyzer {
+public class Analyzer extends SwingWorker<Void, Integer> {
 
     private File worldFolder;
     private LoadingForm loadingForm;
@@ -20,15 +19,47 @@ public class Analyzer {
     private JButton analyzeButton;
     private JFrame frame;
     private int regionFileSize = 0;
+    private long speicherplatz = 0;
 
-    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton){
+    private JComboBox worldTypeDropdown;
+    private JComboBox analyzeCriteriaDropdown;
+    private JTable foundLocationsTable;
+    private JLabel totalRegionFileAmount;
+    private JLabel totalSpace;
+
+    private JButton runMSCButton;
+
+    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace){
         this.worldFolder = worldFolder;
         this.analyzeButton = analyzeButton;
+        this.worldTypeDropdown = worldTypeDropdown;
+        this.analyzeCriteriaDropdown = analyzeCriteriaDropdown;
+        this.foundLocationsTable = foundLocationsTable;
+        this.totalRegionFileAmount = totalRegionFileAmount;
+        this.totalSpace = totalSpace;
+        this.runMSCButton = runMSCButton;
         this.frame = frame;
         isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
 
-        loadingForm = new LoadingForm(frame);
-        loadingForm.LoadingForm.setVisible(true);
+        loadingForm = new LoadingForm(frame, this);
+        JDialog loading = new JDialog(frame, "Analyzing...", true);
+        loading.setContentPane(loadingForm.LoadingForm);
+        loading.setResizable(false);
+        loading.setSize(500, 350);
+        loading.setLocationRelativeTo(null);
+        loading.setVisible(true);
+        loading.toFront();
+        loading.repaint();
+
+        loadingForm.progressFinishedButton.addActionListener(e ->{
+            loading.dispose();
+            loading.setVisible(false);
+        });
+    }
+
+
+    @Override
+    protected Void doInBackground() throws Exception {
         loadingForm.progressBar.setMaximum(getRegionDirFileCount());
 
         analyzeButton.setEnabled(false);
@@ -36,6 +67,20 @@ public class Analyzer {
 
         MSC.logger.log(Level.INFO,"Analyzing Files in "+worldTypeDropdown.getSelectedItem()+" Format.");
 
+        analyze(analyzeCriteriaDropdown, foundLocationsTable);
+
+        MSC.logger.log(Level.INFO,"Found "+regionFileSize+" Region Files.");
+        totalRegionFileAmount.setText(regionFileSize+" Files");
+        totalSpace.setText(Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", bytesToGB(speicherplatz)))+" GB");
+
+        loadingForm.progressFinishedButton.setVisible(true);
+        analyzeButton.setEnabled(true);
+        analyzeButton.setText("Analyze");
+        runMSCButton.setVisible(true);
+        return null;
+    }
+
+    public void analyze(JComboBox analyzeCriteriaDropdown, JTable foundLocationsTable) {
         ArrayList<String> foundLocationsList = new ArrayList<>();
         initialLoad(analyzeCriteriaDropdown, foundLocationsList);
 
@@ -64,19 +109,14 @@ public class Analyzer {
             JLabel criteria = new JLabel();
             criteria.setName(analyzeCriteriaDropdown.getSelectedItem().toString());
             criteria.setText(location);
-            
+
             foundLocationsListEntryList.add(new LocationListEntry(criteria,percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
 
             MSC.logger.log(Level.INFO,+percentage+"% of the region files are in " + location+".");
         }
 
         setupTableModel(foundLocationsTable, foundLocationsListEntryList);
-
-        MSC.logger.log(Level.INFO,"Found "+regionFileSize+" Region Files.");
-
-        analyzeButton.setEnabled(true);
-        analyzeButton.setText("Analyze");
-        runMSCButton.setVisible(true);
+        new MoreAnalyticsForm(frame,foundLocationsListEntryList);
     }
 
     /*
@@ -133,11 +173,13 @@ public class Analyzer {
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
             if((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
                 regionFileSize++;
-                double[] latLon;
+                double[] latLon = null;
                 try {
                     latLon = Converter.toGeo(xy);
                 } catch (OutOfProjectionBoundsException e) {
-                    throw new AnalyzerException("Out of Projection Bounds: "+ xy[0]+","+xy[1] +" This should not happen. Please report this to the BTE Team.");
+                    System.out.println(regionFileName + " is out of bounds. Skipping...");
+                    continue;
+                    //throw new AnalyzerException("Out of Projection Bounds: "+ xy[0]+","+xy[1] +" This should not happen. Please report this to the BTE Team.");
                 }
                 String location = null;
                 switch (analyzeCriteriaDropdown.getSelectedItem().toString()){
@@ -156,6 +198,8 @@ public class Analyzer {
                 }
 
                 System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
+                loadingForm.progressLog.append(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location + "\n");
+                loadingForm.progressLogScrollPane.getVerticalScrollBar().setValue(loadingForm.progressLogScrollPane.getVerticalScrollBar().getMaximum());
 
                 foundLocationsList.add(location);
                 loadingForm.progressBar.setValue(foundLocationsList.size());
@@ -202,6 +246,7 @@ public class Analyzer {
             for (File file : files) {
                 if (file.getName().endsWith(".mca")) {
                     regionFileNames.add(file.getName());
+                    speicherplatz += file.length();
                 }
             }
         }else{
@@ -214,6 +259,7 @@ public class Analyzer {
             for (File file : files) {
                 if (file.getName().endsWith(".3dr")) {
                     regionFileNames.add(file.getName());
+                    speicherplatz += file.length();
                 }
             }
 
@@ -221,6 +267,12 @@ public class Analyzer {
         return regionFileNames;
     }
 
+    public static double bytesToGB(long bytes) {
+        double kilobytes = bytes / 1024.0;
+        double megabytes = kilobytes / 1024.0;
+        double gigabytes = megabytes / 1024.0;
+        return gigabytes;
+    }
 
 
 
