@@ -30,8 +30,6 @@ public class LoadingForm {
                 super.windowClosing(e);
             }
         });
-
-
     }
 
 

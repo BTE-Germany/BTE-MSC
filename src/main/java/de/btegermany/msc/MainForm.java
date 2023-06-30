@@ -1,5 +1,7 @@
 package de.btegermany.msc;
 
+import com.formdev.flatlaf.intellijthemes.FlatOneDarkIJTheme;
+
 import javax.swing.*;
 import java.io.File;
 import java.util.logging.Level;
@@ -30,6 +32,7 @@ public class MainForm {
         analyzerCriteriaDropdown.addItem("State/Province");
         analyzerCriteriaDropdown.addItem("City");
 
+
         analyzeButton.setEnabled(false);
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -46,7 +49,7 @@ public class MainForm {
         });
 
         analyzeButton.addActionListener(e -> {
-           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton, totalRegionFileAmount, totalSpace);
+           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton, totalRegionFileAmount, totalSpace, moreAnalyticsButton);
         });
 
 

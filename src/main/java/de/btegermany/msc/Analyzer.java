@@ -8,13 +8,19 @@ import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 public class Analyzer extends SwingWorker<Void, Integer> {
 
     private File worldFolder;
     private LoadingForm loadingForm;
+    private JDialog loading;
     private boolean isVanilla;
     private JButton analyzeButton;
     private JFrame frame;
@@ -29,7 +35,9 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
     private JButton runMSCButton;
 
-    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace){
+    private JButton moreAnalyticsButton;
+
+    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace, JButton moreAnalyticsButton){
         this.worldFolder = worldFolder;
         this.analyzeButton = analyzeButton;
         this.worldTypeDropdown = worldTypeDropdown;
@@ -37,6 +45,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         this.foundLocationsTable = foundLocationsTable;
         this.totalRegionFileAmount = totalRegionFileAmount;
         this.totalSpace = totalSpace;
+        this.moreAnalyticsButton = moreAnalyticsButton;
         this.runMSCButton = runMSCButton;
         this.frame = frame;
         isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
@@ -52,8 +61,10 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         loading.repaint();
 
         loadingForm.progressFinishedButton.addActionListener(e ->{
+            System.out.println("arsch");
             loading.dispose();
             loading.setVisible(false);
+            loadingForm.LoadingForm.setVisible(false);
         });
     }
 
@@ -73,6 +84,8 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         totalRegionFileAmount.setText(regionFileSize+" Files");
         totalSpace.setText(Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", bytesToGB(speicherplatz)))+" GB");
 
+        loadingForm.progressLabel.setText("Finished!");
+        moreAnalyticsButton.setVisible(true);
         loadingForm.progressFinishedButton.setVisible(true);
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Analyze");
@@ -116,7 +129,11 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         }
 
         setupTableModel(foundLocationsTable, foundLocationsListEntryList);
-        new MoreAnalyticsForm(frame,foundLocationsListEntryList);
+
+        moreAnalyticsButton.addActionListener(e -> {
+            new MoreAnalyticsForm(frame,foundLocationsListEntryList);
+        });
+
     }
 
     /*
@@ -235,9 +252,11 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         Scan the world folder for region files and return them as a list
      */
     private ArrayList<String> getRegionFileNames(){
+        loadingForm.progressLabel.setText("Indexing region files... This process can take a bit.");
         ArrayList<String> regionFileNames = new ArrayList<>();
         if(isVanilla) {
             File regionFolder = new File(worldFolder.getAbsolutePath() + "/region");
+           /*
             File[] files = regionFolder.listFiles();
             if(files == null) {
                 MSC.logger.log(Level.SEVERE,"No region Files found in current world folder. Are you sure this is an Vanilla/Anvil World?");
@@ -249,9 +268,21 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                     speicherplatz += file.length();
                 }
             }
+            */
+            try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
+                paths.filter(path -> path.toString().endsWith(".mca"))
+                        .forEach(path -> {
+                            regionFileNames.add(path.getFileName().toString());
+                            speicherplatz += path.toFile().length();
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }else{
             File regionFolder = new File(worldFolder.getAbsolutePath() + "/region3d");
+            /*
             File[] files = regionFolder.listFiles();
+
             if(files == null) {
                 MSC.logger.log(Level.SEVERE,"No region3d Files found in current world folder. Are you sure this is an CubicChunks World?");
                 throw new AnalyzerException("No region3d Files found in current world folder. Are you sure this is an CubicChunks World?");
@@ -262,7 +293,16 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                     speicherplatz += file.length();
                 }
             }
-
+            */
+            try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
+                paths.filter(path -> path.toString().endsWith(".3dr"))
+                        .forEach(path -> {
+                            regionFileNames.add(path.getFileName().toString());
+                            speicherplatz += path.toFile().length();
+                        });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
         return regionFileNames;
     }

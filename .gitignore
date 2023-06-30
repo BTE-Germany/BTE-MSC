@@ -1,2 +1,4 @@
 # Project exclude paths
 /target/
+msc.log
+msc*.log*
