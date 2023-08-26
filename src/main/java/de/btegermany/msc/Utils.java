@@ -25,6 +25,17 @@ public class Utils {
         return Paths.get(home, "."+mcFolderNanme);
     }
 
+    public static Path getMinecraftDir(String mcFolderNanme, String world) {
+        String home = System.getProperty("user.home", ".");
+        String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
+        if (os.contains("win") && System.getenv("APPDATA") != null) {
+            return Paths.get(System.getenv("APPDATA"), "."+mcFolderNanme);
+        } else if (os.contains("mac")) {
+            return Paths.get(home, "Library", "Application Support", mcFolderNanme);
+        }
+        return Paths.get(home, "."+mcFolderNanme+"/"+world);
+    }
+
     public static GeoLocation getOfflineLocation(double lat, double lon) {
         File osmLocationData = null;
         try {

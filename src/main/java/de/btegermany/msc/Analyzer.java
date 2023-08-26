@@ -1,18 +1,18 @@
 package de.btegermany.msc;
 
-import de.btegermany.msc.exceptions.AnalyzerException;
 import de.btegermany.msc.gui.*;
 import net.buildtheearth.terraminusminus.projection.OutOfProjectionBoundsException;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -30,12 +30,18 @@ public class Analyzer extends SwingWorker<Void, Integer> {
     private JComboBox worldTypeDropdown;
     private JComboBox analyzeCriteriaDropdown;
     private JTable foundLocationsTable;
+
+    private HashMap<String, List<String>> locationCache = new HashMap<>();
+
+    private HashMap<String, String> moveToWorldCache = new HashMap<>();
     private JLabel totalRegionFileAmount;
     private JLabel totalSpace;
 
     private JButton runMSCButton;
 
     private JButton moreAnalyticsButton;
+
+    private JButton selectWorldToMove;
 
     public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace, JButton moreAnalyticsButton){
         this.worldFolder = worldFolder;
@@ -49,6 +55,8 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         this.runMSCButton = runMSCButton;
         this.frame = frame;
         isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
+        runMSCButton.setEnabled(true);
+        runMSCButton.setText("Run MSC");
 
         loadingForm = new LoadingForm(frame, this);
         JDialog loading = new JDialog(frame, "Analyzing...", true);
@@ -60,12 +68,79 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         loading.toFront();
         loading.repaint();
 
-        loadingForm.progressFinishedButton.addActionListener(e ->{
+        /*loadingForm.progressFinishedButton.addActionListener(e ->{
             System.out.println("arsch");
             loading.dispose();
             loading.setVisible(false);
             loadingForm.LoadingForm.setVisible(false);
+        });*/
+
+        runMSCButton.addActionListener(e -> {
+            for( ActionListener al : runMSCButton.getActionListeners() ) {
+                runMSCButton.removeActionListener( al );
+            }
+            MSC.logger.log(Level.INFO, "Started MSC");
+            //runMSCButton.setVisible(false);
+            runMSCButton.setEnabled(false);
+            runMSCButton.setText("Please Run Analyze before running MSC again!");
+            runMSC();
+
+
+
         });
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setCurrentDirectory(new File(Utils.getMinecraftDir("buildtheearth").toFile().getAbsolutePath() + "/saves"));
+
+        selectWorldToMove.addActionListener(e -> {
+            System.out.println("wrfewtrfwertfertgferwgtretgerdtg");
+            //int returnVal = chooser.showOpenDialog();
+            if(0 == JFileChooser.APPROVE_OPTION) {
+                MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
+                System.out.println(chooser.getSelectedFile().getAbsolutePath());
+                //selectedWorldLabel.setText(chooser.getSelectedFile().getAbsolutePath());
+                //worldSelectorButton.setText("Change World");
+                //analyzeButton.setEnabled(true);
+            }
+        });
+
+
+
+    }
+
+
+    public void runMSC(){
+        //System.out.println(foundLocationsTable.getColumnName(3));
+        int rowCount = foundLocationsTable.getRowCount();
+        for(int row = 0; row < rowCount; row++){
+            String action = "Do nothing";
+            if((action = foundLocationsTable.getValueAt(row, 3).toString()) != null){
+                String toWorld = null;
+                if(foundLocationsTable.getValueAt(row, 0) != null){
+                    toWorld = moveToWorldCache.get(foundLocationsTable.getValueAt(row, 0).toString());
+                }
+
+                if(action.equals("Extract location files to")){
+                    //Move Files to toWorld file
+
+                    new File(Utils.getMinecraftDir("buildtheearth", toWorld).toFile().getAbsolutePath() + "/saves");
+                }
+
+
+
+                System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+foundLocationsTable.getValueAt(row, 4));
+                System.out.println(Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()));
+            }
+
+
+
+        }
+
+
+
+        System.out.println(foundLocationsTable.getRowCount());
+
     }
 
 
@@ -86,6 +161,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         loadingForm.progressLabel.setText("Finished!");
         moreAnalyticsButton.setVisible(true);
+        moreAnalyticsButton.setEnabled(false);
         loadingForm.progressFinishedButton.setVisible(true);
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Analyze");
@@ -113,8 +189,8 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             jComboBox.addItem("Extract location files to");
             jComboBox.addItem("Delete location files from world");
 
-            JButton jButton = new JButton("Select world");
-            jButton.setEnabled(false);
+            selectWorldToMove = new JButton("Select world");
+            selectWorldToMove.setEnabled(false);
 
             int amountFilesForLocation = countFilesForLocation(location,foundLocationsList);
             double percentage = (double) amountFilesForLocation / regionFileSize * 100;
@@ -123,7 +199,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             criteria.setName(analyzeCriteriaDropdown.getSelectedItem().toString());
             criteria.setText(location);
 
-            foundLocationsListEntryList.add(new LocationListEntry(criteria,percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,jButton));
+            foundLocationsListEntryList.add(new LocationListEntry(criteria,percentage,new JLabel(amountFilesForLocation + "x"),jComboBox,selectWorldToMove));
 
             MSC.logger.log(Level.INFO,+percentage+"% of the region files are in " + location+".");
         }
@@ -214,12 +290,26 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                         break;
                 }
 
-                System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
+                //System.out.println(location);
+
+
+                if(this.locationCache.get(location) == null){
+                    List<String> tempList = new ArrayList<>();
+                    tempList.add(regionFileName);
+                    this.locationCache.put(location, tempList);
+                }else{
+                    List<String> tempList = this.locationCache.get(location);
+                    tempList.add(regionFileName);
+                    this.locationCache.put(location, tempList);
+                }
+
+                //System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
                 loadingForm.progressLog.append(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location + "\n");
                 loadingForm.progressLogScrollPane.getVerticalScrollBar().setValue(loadingForm.progressLogScrollPane.getVerticalScrollBar().getMaximum());
 
                 foundLocationsList.add(location);
                 loadingForm.progressBar.setValue(foundLocationsList.size());
+                System.out.println(7);
 
             }
         }

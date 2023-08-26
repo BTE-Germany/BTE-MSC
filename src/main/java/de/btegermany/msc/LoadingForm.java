@@ -1,6 +1,7 @@
 package de.btegermany.msc;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -29,6 +30,13 @@ public class LoadingForm {
                 analyzer.cancel(true);
                 super.windowClosing(e);
             }
+        });
+
+        progressFinishedButton.addActionListener(e -> {
+            JComponent comp = (JComponent) e.getSource();
+            Window win = SwingUtilities.getWindowAncestor(comp);
+            win.dispose();
+            //frame.dispose();
         });
     }
 

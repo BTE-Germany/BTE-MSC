@@ -57,4 +57,6 @@ public class LocationListEntry {
     public JComboBox<String> getComboBox() {
         return comboBox;
     }
+
+
 }
