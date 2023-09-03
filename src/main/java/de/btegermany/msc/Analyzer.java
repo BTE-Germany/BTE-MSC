@@ -68,13 +68,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         loading.toFront();
         loading.repaint();
 
-        /*loadingForm.progressFinishedButton.addActionListener(e ->{
-            System.out.println("arsch");
-            loading.dispose();
-            loading.setVisible(false);
-            loadingForm.LoadingForm.setVisible(false);
-        });*/
-
         runMSCButton.addActionListener(e -> {
             for( ActionListener al : runMSCButton.getActionListeners() ) {
                 runMSCButton.removeActionListener( al );
@@ -84,9 +77,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             runMSCButton.setEnabled(false);
             runMSCButton.setText("Please Run Analyze before running MSC again!");
             runMSC();
-
-
-
         });
 
         JFileChooser chooser = new JFileChooser();
@@ -95,16 +85,16 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         selectWorldToMove.addActionListener(e -> {
             System.out.println("wrfewtrfwertfertgferwgtretgerdtg");
-            //int returnVal = chooser.showOpenDialog();
+            chooser.showOpenDialog(frame);
+            /*
             if(0 == JFileChooser.APPROVE_OPTION) {
                 MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
                 System.out.println(chooser.getSelectedFile().getAbsolutePath());
-                //selectedWorldLabel.setText(chooser.getSelectedFile().getAbsolutePath());
-                //worldSelectorButton.setText("Change World");
-                //analyzeButton.setEnabled(true);
-            }
-        });
 
+            }
+
+             */
+        });
 
 
     }
@@ -127,17 +117,11 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                     new File(Utils.getMinecraftDir("buildtheearth", toWorld).toFile().getAbsolutePath() + "/saves");
                 }
 
-
-
                 System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+foundLocationsTable.getValueAt(row, 4));
                 System.out.println(Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()));
             }
 
-
-
         }
-
-
 
         System.out.println(foundLocationsTable.getRowCount());
 
@@ -161,7 +145,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         loadingForm.progressLabel.setText("Finished!");
         moreAnalyticsButton.setVisible(true);
-        moreAnalyticsButton.setEnabled(false);
+        moreAnalyticsButton.setEnabled(true);
         loadingForm.progressFinishedButton.setVisible(true);
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Analyze");
@@ -206,8 +190,9 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         setupTableModel(foundLocationsTable, foundLocationsListEntryList);
 
+        MoreAnalyticsForm moreAnalyticsForm = new MoreAnalyticsForm(frame,foundLocationsListEntryList);
         moreAnalyticsButton.addActionListener(e -> {
-            new MoreAnalyticsForm(frame,foundLocationsListEntryList);
+            moreAnalyticsForm.getMoreAnalyticsDialog().setVisible(true);;
         });
 
     }

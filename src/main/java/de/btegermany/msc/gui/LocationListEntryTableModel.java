@@ -80,7 +80,7 @@ public class LocationListEntryTableModel extends AbstractTableModel {
             String string2 = (String) value2;
             return string1.compareTo(string2);
         });
-        tableRowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(1, SortOrder.DESCENDING)));
+        tableRowSorter.setSortKeys(Arrays.asList(new RowSorter.SortKey(2, SortOrder.DESCENDING)));
         return tableRowSorter;
     }
 }
