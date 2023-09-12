@@ -14,13 +14,14 @@ import java.util.logging.Level;
 
 public class ButtonEditor extends DefaultCellEditor {
 
-    protected JButton button;
+    private JButton button;
     private String label;
+    private String selectedDirectory;
     private boolean isPushed;
 
-    public ButtonEditor(LocationListEntryTableModel locationListEntryTableModel, int selectedRow){
+    public ButtonEditor(JButton button,LocationListEntryTableModel locationListEntryTableModel, int selectedRow){
         super(new JCheckBox());
-        button = new JButton();
+        this.button = button;
         button.setOpaque(true);
         button.addActionListener(e -> {
             JFileChooser chooser = new JFileChooser();
@@ -30,43 +31,25 @@ public class ButtonEditor extends DefaultCellEditor {
 
             int returnVal = chooser.showOpenDialog(null);
             if(returnVal == JFileChooser.APPROVE_OPTION) {
-                //MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
-                locationListEntryTableModel.setValueAt(chooser.getSelectedFile().getAbsolutePath(),selectedRow,4);
-                button.setText(chooser.getSelectedFile().getName());
+                MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
+                selectedDirectory = chooser.getSelectedFile().getAbsolutePath();
+                button.setText(chooser.getSelectedFile().getAbsolutePath());
+                button.setName(chooser.getSelectedFile().getAbsolutePath());
             }
-            fireEditingStopped();
+            // Stop cell editing to save the changes
+            stopCellEditing();
         });
     }
 
     @Override
-    public Component getTableCellEditorComponent(JTable table, Object value,
-                                                 boolean isSelected, int row, int column) {
-        if (isSelected) {
-            button.setForeground(table.getSelectionForeground());
-            button.setBackground(table.getSelectionBackground());
-        } else {
-            button.setForeground(table.getForeground());
-            button.setBackground(table.getBackground());
-        }
-        label = (value == null) ? "" : value.toString();
-        button.setHorizontalAlignment(SwingConstants.CENTER);
-        button.setText(label);
-        isPushed = true;
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         return button;
     }
 
     @Override
     public Object getCellEditorValue() {
-        if (isPushed) {
-
-        }
-        isPushed = false;
-        return label;
+        return selectedDirectory;
     }
 
-    @Override
-    public boolean stopCellEditing() {
-        isPushed = false;
-        return super.stopCellEditing();
-    }
+
 }

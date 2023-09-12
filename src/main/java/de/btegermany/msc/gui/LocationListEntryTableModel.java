@@ -58,6 +58,8 @@ public class LocationListEntryTableModel extends AbstractTableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if(columnIndex == 3){
             foundLocationsList.get(rowIndex).getComboBox().setSelectedItem(aValue);
+        }else if(columnIndex == 4){
+            foundLocationsList.get(rowIndex).getWorld().setText(aValue == null ? "Select world" : aValue.toString());
         }
         fireTableCellUpdated(rowIndex, columnIndex);
     }

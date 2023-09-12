@@ -7,12 +7,51 @@ import de.btegermany.msc.geo.ReverseGeocoder;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.logging.Level;
 
 public class Utils {
+
+    public static boolean moveFile(String sourceFilePath, String destinationFolderPath) {
+        Path sourcePath = Path.of(sourceFilePath);
+        Path destinationPath = Path.of(destinationFolderPath, sourcePath.getFileName().toString());
+
+        // Versuchen, die Datei zu verschieben
+        try {
+            Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return true;
+    }
+
+    public static boolean deleteFile(String filePath) {
+        File file = new File(filePath);
+
+        // Überprüfen, ob die Datei existiert
+        if (file.exists()) {
+            try {
+                // Versuchen, die Datei zu löschen
+                if (file.delete()) {
+                    return true;
+                } else {
+                    System.err.println("Fehler beim Löschen der Datei: " + filePath);
+                    return false;
+                }
+            } catch (SecurityException e) {
+                System.err.println("Keine Berechtigung zum Löschen der Datei: " + filePath);
+                return false;
+            }
+        } else {
+            System.err.println("Die Datei existiert nicht: " + filePath);
+            return false;
+        }
+    }
 
     public static Path getMinecraftDir(String mcFolderNanme) {
         String home = System.getProperty("user.home", ".");

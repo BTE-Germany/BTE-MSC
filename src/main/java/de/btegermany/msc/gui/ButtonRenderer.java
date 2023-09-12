@@ -8,22 +8,29 @@ import java.awt.*;
 
 public class ButtonRenderer extends JButton implements TableCellRenderer {
 
-    public ButtonRenderer() {
-        setOpaque(true);
+
+    private JButton button;
+
+    public ButtonRenderer(JButton jButton) {
+        super();
+        this.button = new JButton();
+        button.setOpaque(true);
     }
 
+
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (isSelected) {
-            setForeground(table.getSelectionForeground());
-            setBackground(table.getSelectionBackground());
+            button.setForeground(table.getForeground());
+            button.setBackground(UIManager.getColor("Button.background"));
         } else {
-            setForeground(table.getForeground());
-            setBackground(table.getBackground());
+            button.setForeground(table.getSelectionForeground());
+            button.setBackground(table.getSelectionBackground());
         }
-        setText((value == null) ? "" : value.toString());
-        setHorizontalTextPosition(SwingConstants.CENTER);
-        return this;
+
+
+
+        button.setText((value == null) ? "" : value.toString());
+        return button;
     }
 }

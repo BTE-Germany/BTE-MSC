@@ -78,23 +78,21 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             runMSCButton.setText("Please Run Analyze before running MSC again!");
             runMSC();
         });
-
+/*
         JFileChooser chooser = new JFileChooser();
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
         chooser.setCurrentDirectory(new File(Utils.getMinecraftDir("buildtheearth").toFile().getAbsolutePath() + "/saves"));
-
         selectWorldToMove.addActionListener(e -> {
             System.out.println("wrfewtrfwertfertgferwgtretgerdtg");
             chooser.showOpenDialog(frame);
-            /*
             if(0 == JFileChooser.APPROVE_OPTION) {
                 MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
                 System.out.println(chooser.getSelectedFile().getAbsolutePath());
 
             }
 
-             */
         });
+*/
 
 
     }
@@ -106,19 +104,32 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         for(int row = 0; row < rowCount; row++){
             String action = "Do nothing";
             if((action = foundLocationsTable.getValueAt(row, 3).toString()) != null){
-                String toWorld = null;
-                if(foundLocationsTable.getValueAt(row, 0) != null){
-                    toWorld = moveToWorldCache.get(foundLocationsTable.getValueAt(row, 0).toString());
+                String toWorld = foundLocationsTable.getValueAt(row, 4).toString();
+                String regionFolder = null;
+
+                if(isVanilla) {
+                    regionFolder = "/region";
+                }else {
+                    regionFolder = "/region3d";
+                    // TODO: also move the 2d regions
                 }
 
                 if(action.equals("Extract location files to")){
                     //Move Files to toWorld file
+                    for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
+                        Utils.moveFile(worldFolder.getAbsolutePath()+regionFolder+"/"+absoluteRegionFile, toWorld + regionFolder);
+                    }
 
-                    new File(Utils.getMinecraftDir("buildtheearth", toWorld).toFile().getAbsolutePath() + "/saves");
+                }else if(action.equals("Delete location files")) {
+                    // Delete Files from original world
+                    for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
+                        Utils.deleteFile(worldFolder.getAbsolutePath()+regionFolder+"/"+absoluteRegionFile);
+                    }
+
                 }
 
-                System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+foundLocationsTable.getValueAt(row, 4));
-                System.out.println(Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()));
+                System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+toWorld);
+                System.out.println(Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()) + "\n");
             }
 
         }
@@ -234,12 +245,12 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         foundLocationsTable.getColumnModel().getColumn(3).setCellEditor(comboBoxEditor);
         foundLocationsTable.getColumnModel().getColumn(3).setCellRenderer(new CheckBoxCellRenderer(jComboBox));
 
+        // Button for selecting world to move files to
+        JButton selectWorldToMove = new JButton("Select world");
 
-        // Button for selecting world
-        //foundLocationsTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer());
-        foundLocationsTable.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer());
-        foundLocationsTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(locationListEntryTableModel, foundLocationsTable.getSelectedColumn()));
-
+        foundLocationsTable.getColumnModel().getColumn(4).setCellRenderer(new ButtonRenderer(selectWorldToMove));
+        //foundLocationsTable.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer());
+        foundLocationsTable.getColumnModel().getColumn(4).setCellEditor(new ButtonEditor(selectWorldToMove,locationListEntryTableModel, foundLocationsTable.getSelectedColumn()));
 
     }
 
@@ -294,7 +305,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
                 foundLocationsList.add(location);
                 loadingForm.progressBar.setValue(foundLocationsList.size());
-                System.out.println(7);
 
             }
         }
