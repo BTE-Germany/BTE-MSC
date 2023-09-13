@@ -33,7 +33,8 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
     private HashMap<String, List<String>> locationCache = new HashMap<>();
 
-    private HashMap<String, String> moveToWorldCache = new HashMap<>();
+    private HashMap<String, List<String>> location2dCache = new HashMap<>();
+
     private JLabel totalRegionFileAmount;
     private JLabel totalSpace;
 
@@ -78,64 +79,70 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             runMSCButton.setText("Please Run Analyze before running MSC again!");
             runMSC();
         });
-/*
-        JFileChooser chooser = new JFileChooser();
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        chooser.setCurrentDirectory(new File(Utils.getMinecraftDir("buildtheearth").toFile().getAbsolutePath() + "/saves"));
-        selectWorldToMove.addActionListener(e -> {
-            System.out.println("wrfewtrfwertfertgferwgtretgerdtg");
-            chooser.showOpenDialog(frame);
-            if(0 == JFileChooser.APPROVE_OPTION) {
-                MSC.logger.log(Level.INFO,"Selected world: "+chooser.getSelectedFile().getName());
-                System.out.println(chooser.getSelectedFile().getAbsolutePath());
-
-            }
-
-        });
-*/
-
-
     }
 
 
     public void runMSC(){
-        //System.out.println(foundLocationsTable.getColumnName(3));
         int rowCount = foundLocationsTable.getRowCount();
         for(int row = 0; row < rowCount; row++){
             String action = "Do nothing";
             if((action = foundLocationsTable.getValueAt(row, 3).toString()) != null){
                 String toWorld = foundLocationsTable.getValueAt(row, 4).toString();
                 String regionFolder = null;
-
+                ArrayList<String> regionFiles2d = new ArrayList<>();
                 if(isVanilla) {
                     regionFolder = "/region";
                 }else {
                     regionFolder = "/region3d";
-                    // TODO: also move the 2d regions
                 }
 
                 if(action.equals("Extract location files to")){
+
                     //Move Files to toWorld file
                     for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
+                        if(!isVanilla){
+                            String regionFile2dName = Converter.regionFile3dTo2d(absoluteRegionFile);
+                            if(!regionFiles2d.contains(regionFile2dName)){
+                                regionFiles2d.add(regionFile2dName);
+                            }
+                        }
                         Utils.moveFile(worldFolder.getAbsolutePath()+regionFolder+"/"+absoluteRegionFile, toWorld + regionFolder);
                     }
-
+                    // move 2d files if cc world
+                    if(!regionFiles2d.isEmpty()) {
+                        for (String regionFile2dName : regionFiles2d) {
+                            Utils.moveFile(worldFolder.getAbsolutePath()+"/region2d/"+regionFile2dName, toWorld + "/region2d");
+                        }
+                    }
                 }else if(action.equals("Delete location files")) {
                     // Delete Files from original world
                     for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
+                        if(!isVanilla){
+                            String regionFile2dName = Converter.regionFile3dTo2d(absoluteRegionFile);
+                            if(!regionFiles2d.contains(regionFile2dName)){
+                                regionFiles2d.add(regionFile2dName);
+                            }
+                        }
                         Utils.deleteFile(worldFolder.getAbsolutePath()+regionFolder+"/"+absoluteRegionFile);
+                    }
+                    // delete 2d files if cc world
+                    if(!regionFiles2d.isEmpty()) {
+                        for (String regionFile2dName : regionFiles2d) {
+                            Utils.deleteFile(worldFolder.getAbsolutePath() + "/region2d/" + regionFile2dName);
+                        }
                     }
 
                 }
 
                 System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+toWorld);
-                System.out.println(Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()) + "\n");
+                System.out.println("Regionfiles" + Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()));
+                if(!isVanilla){
+                    System.out.println("Regionfiles2d" + Arrays.toString(regionFiles2d.toArray()) + "\n");
+                }
             }
-
         }
 
-        System.out.println(foundLocationsTable.getRowCount());
-
+        MSC.logger.log(Level.FINE, "Successfully run msc on " + foundLocationsTable.getRowCount() + " locations");
     }
 
 
@@ -182,7 +189,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             JComboBox jComboBox = new JComboBox();
             jComboBox.addItem("Do nothing");
             jComboBox.addItem("Extract location files to");
-            jComboBox.addItem("Delete location files from world");
+            jComboBox.addItem("Delete location files");
 
             selectWorldToMove = new JButton("Select world");
             selectWorldToMove.setEnabled(false);
@@ -238,7 +245,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         JComboBox jComboBox = new JComboBox();
         jComboBox.addItem("Do nothing");
         jComboBox.addItem("Extract location files to");
-        jComboBox.addItem("Delete location files from world");
+        jComboBox.addItem("Delete location files");
 
         DefaultCellEditor comboBoxEditor = new DefaultCellEditor(jComboBox);
         comboBoxEditor.setClickCountToStart(1);
@@ -308,6 +315,13 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
             }
         }
+        // adds 2d region files
+        if(!isVanilla){
+            for(String regionFileName2D : get2DRegionFileNames()){
+
+            }
+        }
+
     }
 
     /*
@@ -388,6 +402,22 @@ public class Analyzer extends SwingWorker<Void, Integer> {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        return regionFileNames;
+    }
+
+    private ArrayList<String> get2DRegionFileNames(){
+        loadingForm.progressLabel.setText("Indexing region files... This process can take a bit.");
+        ArrayList<String> regionFileNames = new ArrayList<>();
+        File regionFolder = new File(worldFolder.getAbsolutePath() + "/region2d");
+
+        try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
+            paths.filter(path -> path.toString().endsWith(".2dr"))
+                    .forEach(path -> {
+                        regionFileNames.add(path.getFileName().toString());
+                    });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return regionFileNames;
     }

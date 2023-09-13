@@ -19,12 +19,13 @@ public class Utils {
     public static boolean moveFile(String sourceFilePath, String destinationFolderPath) {
         Path sourcePath = Path.of(sourceFilePath);
         Path destinationPath = Path.of(destinationFolderPath, sourcePath.getFileName().toString());
+        System.out.println("Moving file " + sourceFilePath + " to " + destinationPath);
 
         // Versuchen, die Datei zu verschieben
         try {
             Files.move(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error while trying to move the file " + sourceFilePath);
         }
 
         return true;
@@ -40,15 +41,15 @@ public class Utils {
                 if (file.delete()) {
                     return true;
                 } else {
-                    System.err.println("Fehler beim Löschen der Datei: " + filePath);
+                    System.err.println("Error while deleting " + filePath);
                     return false;
                 }
             } catch (SecurityException e) {
-                System.err.println("Keine Berechtigung zum Löschen der Datei: " + filePath);
+                System.err.println("No permission to delete " + filePath);
                 return false;
             }
         } else {
-            System.err.println("Die Datei existiert nicht: " + filePath);
+            System.err.println("The file does not exist: " + filePath);
             return false;
         }
     }
