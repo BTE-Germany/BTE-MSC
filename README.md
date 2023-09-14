@@ -14,7 +14,7 @@
   </p>
 </p>
 
-![Issues](https://img.shields.io/github/issues/bte-germany/BTE-MSC) ![License](https://img.shields.io/github/license/bte-germany/BTE-MSC) 
+![Issues](https://img.shields.io/github/issues/bte-germany/BTE-MSC) ![License](https://img.shields.io/github/license/bte-germany/BTE-MSC) ![License](https://img.shields.io/github/release/bte-germany/BTE-MSC) 
 
 ## Contributing
 
