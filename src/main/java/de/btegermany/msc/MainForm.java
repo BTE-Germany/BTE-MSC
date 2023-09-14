@@ -1,7 +1,5 @@
 package de.btegermany.msc;
 
-import com.formdev.flatlaf.intellijthemes.FlatOneDarkIJTheme;
-
 import javax.swing.*;
 import java.io.File;
 import java.util.logging.Level;
@@ -18,6 +16,7 @@ public class MainForm {
     private JLabel totalRegionFileAmount;
     private JLabel totalSpace;
     private JButton moreAnalyticsButton;
+    private JCheckBox deleteBuggedRegionsCheckBox;
 
     private Analyzer analyzer;
 
@@ -49,7 +48,7 @@ public class MainForm {
         });
 
         analyzeButton.addActionListener(e -> {
-           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton, totalRegionFileAmount, totalSpace, moreAnalyticsButton);
+           analyzer = new Analyzer(chooser.getSelectedFile(),analyzeButton,frame, worldTypeDropdown,analyzerCriteriaDropdown,foundLocations, runMSCButton, totalRegionFileAmount, totalSpace, moreAnalyticsButton,deleteBuggedRegionsCheckBox);
         });
 
 

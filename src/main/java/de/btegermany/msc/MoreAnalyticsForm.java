@@ -50,8 +50,8 @@ public class MoreAnalyticsForm {
         chart.getStyler().setLegendFont(UIManager.getFont("Button.font"));
 
 
-        for (int i = 0; i < foundLocationsListEntryList.size(); i++) {
-            if (i < 10) {
+        for (int i = 0; i <= 10; i++) {
+            if (i < foundLocationsListEntryList.size()) {
                 chart.addSeries(foundLocationsListEntryList.get(i).getLocation().getText(), Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", foundLocationsListEntryList.get(i).getPercentage())));
             } else {
                 chart.addSeries("Other", Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", foundLocationsListEntryList.get(i).getPercentage())));

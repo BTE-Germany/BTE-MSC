@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
@@ -42,9 +43,11 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
     private JButton moreAnalyticsButton;
 
+    private JCheckBox deleteBuggedRegionsCheckBox;
+
     private JButton selectWorldToMove;
 
-    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace, JButton moreAnalyticsButton){
+    public Analyzer(File worldFolder,JButton analyzeButton,JFrame frame, JComboBox worldTypeDropdown,JComboBox analyzeCriteriaDropdown,JTable foundLocationsTable, JButton runMSCButton, JLabel totalRegionFileAmount, JLabel totalSpace, JButton moreAnalyticsButton, JCheckBox deleteBuggedRegionsCheckBox){
         this.worldFolder = worldFolder;
         this.analyzeButton = analyzeButton;
         this.worldTypeDropdown = worldTypeDropdown;
@@ -54,6 +57,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         this.totalSpace = totalSpace;
         this.moreAnalyticsButton = moreAnalyticsButton;
         this.runMSCButton = runMSCButton;
+        this.deleteBuggedRegionsCheckBox = deleteBuggedRegionsCheckBox;
         this.frame = frame;
         isVanilla = worldTypeDropdown.getSelectedItem().equals("Vanilla/Anvil");
         runMSCButton.setEnabled(true);
@@ -84,6 +88,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
     public void runMSC(){
         int rowCount = foundLocationsTable.getRowCount();
+        MSC.logger.log(Level.INFO, "MSC will run with "+rowCount + " " +foundLocationsTable.getColumnName(0)+".");
         for(int row = 0; row < rowCount; row++){
             String action = "Do nothing";
             if((action = foundLocationsTable.getValueAt(row, 3).toString()) != null){
@@ -97,7 +102,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                 }
 
                 if(action.equals("Extract location files to")){
-
                     //Move Files to toWorld file
                     for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
                         if(!isVanilla){
@@ -114,6 +118,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                             Utils.moveFile(worldFolder.getAbsolutePath()+"/region2d/"+regionFile2dName, toWorld + "/region2d");
                         }
                     }
+                    rowCount--;
                 }else if(action.equals("Delete location files")) {
                     // Delete Files from original world
                     for(String absoluteRegionFile : locationCache.get(foundLocationsTable.getValueAt(row, 0).toString())){
@@ -131,24 +136,24 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                             Utils.deleteFile(worldFolder.getAbsolutePath() + "/region2d/" + regionFile2dName);
                         }
                     }
-
+                    rowCount--;
                 }
 
-                System.out.println(foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+toWorld);
-                System.out.println("Regionfiles" + Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()));
+                MSC.logger.log(Level.INFO,foundLocationsTable.getColumnName(0)+" "+foundLocationsTable.getValueAt(row, 0)+ " -> "+ foundLocationsTable.getValueAt(row, 3) + " "+toWorld);
+                MSC.logger.log(Level.INFO,"Manipulated Regionfiles: " + Arrays.toString(locationCache.get(foundLocationsTable.getValueAt(row, 0).toString()).toArray()).replace("[","").replace("]",""));
+
                 if(!isVanilla){
-                    System.out.println("Regionfiles2d" + Arrays.toString(regionFiles2d.toArray()) + "\n");
+                    MSC.logger.log(Level.INFO,"Manipulated Regionfiles2d" + Arrays.toString(regionFiles2d.toArray()).replace("[","").replace("]",""));
                 }
             }
         }
 
-        MSC.logger.log(Level.FINE, "Successfully run msc on " + foundLocationsTable.getRowCount() + " locations");
+        MSC.logger.log(Level.FINE, "Successfully ran MSC on " + rowCount + " " +foundLocationsTable.getColumnName(0)+".");
     }
 
 
     @Override
-    protected Void doInBackground() throws Exception {
-        loadingForm.progressBar.setMaximum(getRegionDirFileCount());
+    protected Void doInBackground() {
 
         analyzeButton.setEnabled(false);
         analyzeButton.setText("Analyzing...");
@@ -162,8 +167,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         totalSpace.setText(Double.parseDouble(String.format(Locale.ENGLISH, "%1.2f", bytesToGB(speicherplatz)))+" GB");
 
         loadingForm.progressLabel.setText("Finished!");
-        moreAnalyticsButton.setVisible(true);
-        moreAnalyticsButton.setEnabled(true);
         loadingForm.progressFinishedButton.setVisible(true);
         analyzeButton.setEnabled(true);
         analyzeButton.setText("Analyze");
@@ -208,15 +211,18 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         setupTableModel(foundLocationsTable, foundLocationsListEntryList);
 
-        MoreAnalyticsForm moreAnalyticsForm = new MoreAnalyticsForm(frame,foundLocationsListEntryList);
+
+        // TODO: Fix this, broken
+        /*MoreAnalyticsForm moreAnalyticsForm = new MoreAnalyticsForm(frame,foundLocationsListEntryList);
         moreAnalyticsButton.addActionListener(e -> {
             moreAnalyticsForm.getMoreAnalyticsDialog().setVisible(true);;
-        });
+        });*/
 
     }
 
     /*
         Sets up the table model for foundLocationsTable
+
      */
     private void setupTableModel(JTable foundLocationsTable, ArrayList<LocationListEntry> foundLocationsListEntryList) {
 
@@ -265,49 +271,51 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         Gets location from region files and adds them to the foundLocationsList
      */
     private void initialLoad(JComboBox analyzeCriteriaDropdown, ArrayList<String> foundLocationsList) {
-        for(String regionFileName : getRegionFileNames()){
+        for (String regionFileName : getRegionFileNames()) {
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
-            if((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
+            if ((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
                 regionFileSize++;
                 double[] latLon = null;
                 try {
                     latLon = Converter.toGeo(xy);
                 } catch (OutOfProjectionBoundsException e) {
                     System.out.println(regionFileName + " is out of bounds. Skipping...");
+                    // TODO: Substract skipped files from regionFileSize and progressBar
+                    loadingForm.progressBar.setMaximum(loadingForm.progressBar.getMaximum()-1);
                     continue;
                     //throw new AnalyzerException("Out of Projection Bounds: "+ xy[0]+","+xy[1] +" This should not happen. Please report this to the BTE Team.");
                 }
                 String location = null;
-                switch (analyzeCriteriaDropdown.getSelectedItem().toString()){
+                switch (analyzeCriteriaDropdown.getSelectedItem().toString()) {
                     case "Continent":
-                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getContinent();
+                        location = Utils.getOfflineLocation(latLon[0], latLon[1]).getContinent();
                         break;
                     case "Country":
-                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCountry();
+                        location = Utils.getOfflineLocation(latLon[0], latLon[1]).getCountry();
                         break;
                     case "State/Province":
-                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getState();
+                        location = Utils.getOfflineLocation(latLon[0], latLon[1]).getState();
                         break;
                     case "City":
-                        location = Utils.getOfflineLocation(latLon[0],latLon[1]).getCity();
+                        location = Utils.getOfflineLocation(latLon[0], latLon[1]).getCity();
                         break;
                 }
 
                 //System.out.println(location);
 
 
-                if(this.locationCache.get(location) == null){
+                if (this.locationCache.get(location) == null) {
                     List<String> tempList = new ArrayList<>();
                     tempList.add(regionFileName);
                     this.locationCache.put(location, tempList);
-                }else{
+                } else {
                     List<String> tempList = this.locationCache.get(location);
                     tempList.add(regionFileName);
                     this.locationCache.put(location, tempList);
                 }
 
                 //System.out.println(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location);
-                loadingForm.progressLog.append(regionFileName +" | "+ xy[0]+" "+xy[1] +" | "+latLon[0]+" "+latLon[1] + " | "+location + "\n");
+                loadingForm.progressLog.append(regionFileName + " | " + xy[0] + " " + xy[1] + " | " + latLon[0] + " " + latLon[1] + " | " + location + "\n");
                 loadingForm.progressLogScrollPane.getVerticalScrollBar().setValue(loadingForm.progressLogScrollPane.getVerticalScrollBar().getMaximum());
 
                 foundLocationsList.add(location);
@@ -315,13 +323,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
             }
         }
-        // adds 2d region files
-        if(!isVanilla){
-            for(String regionFileName2D : get2DRegionFileNames()){
-
-            }
-        }
-
     }
 
     /*
@@ -338,15 +339,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         return count;
     }
 
-    private int getRegionDirFileCount(){
-        File regionFolder;
-        if(isVanilla) {
-            regionFolder = new File(worldFolder.getAbsolutePath() + "/region");
-        } else {
-            regionFolder = new File(worldFolder.getAbsolutePath() + "/region3d");
-        }
-        return regionFolder.listFiles().length;
-    }
     /*
         Scan the world folder for region files and return them as a list
      */
@@ -355,19 +347,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         ArrayList<String> regionFileNames = new ArrayList<>();
         if(isVanilla) {
             File regionFolder = new File(worldFolder.getAbsolutePath() + "/region");
-           /*
-            File[] files = regionFolder.listFiles();
-            if(files == null) {
-                MSC.logger.log(Level.SEVERE,"No region Files found in current world folder. Are you sure this is an Vanilla/Anvil World?");
-                throw new AnalyzerException("No region Files found in current world folder. Are you sure this is an Vanilla/Anvil World?");
-            }
-            for (File file : files) {
-                if (file.getName().endsWith(".mca")) {
-                    regionFileNames.add(file.getName());
-                    speicherplatz += file.length();
-                }
-            }
-            */
             try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
                 paths.filter(path -> path.toString().endsWith(".mca"))
                         .forEach(path -> {
@@ -378,49 +357,34 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                 e.printStackTrace();
             }
         }else{
+            AtomicInteger deletedBuggedRegions = new AtomicInteger();
             File regionFolder = new File(worldFolder.getAbsolutePath() + "/region3d");
-            /*
-            File[] files = regionFolder.listFiles();
-
-            if(files == null) {
-                MSC.logger.log(Level.SEVERE,"No region3d Files found in current world folder. Are you sure this is an CubicChunks World?");
-                throw new AnalyzerException("No region3d Files found in current world folder. Are you sure this is an CubicChunks World?");
-            }
-            for (File file : files) {
-                if (file.getName().endsWith(".3dr")) {
-                    regionFileNames.add(file.getName());
-                    speicherplatz += file.length();
-                }
-            }
-            */
             try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
+
                 paths.filter(path -> path.toString().endsWith(".3dr"))
                         .forEach(path -> {
-                            regionFileNames.add(path.getFileName().toString());
-                            speicherplatz += path.toFile().length();
+                            // TODO: fix 100.000x the same 3dr file
+                            String[] parts = path.getFileName().toString().split("\\.");
+                            // skips all region files that are higher than 40*256 or lower than -40*256
+                            int h = Integer.parseInt(parts[1]);
+                            if(h > -40 &&  h < 40) {
+                                regionFileNames.add(path.getFileName().toString());
+                                speicherplatz += path.toFile().length();
+                            } else if(deleteBuggedRegionsCheckBox.isSelected()) {
+                                // Delete bugged regions
+                                Utils.deleteFile(path.toString());
+                                deletedBuggedRegions.getAndIncrement();
+                            };
                         });
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            loadingForm.progressBar.setMaximum(regionFileNames.toArray().length);
+            MSC.logger.log(Level.INFO, "Deleted "+deletedBuggedRegions.get()+" bugged regions.");
         }
         return regionFileNames;
     }
 
-    private ArrayList<String> get2DRegionFileNames(){
-        loadingForm.progressLabel.setText("Indexing region files... This process can take a bit.");
-        ArrayList<String> regionFileNames = new ArrayList<>();
-        File regionFolder = new File(worldFolder.getAbsolutePath() + "/region2d");
-
-        try (Stream<Path> paths = Files.list(regionFolder.toPath())) {
-            paths.filter(path -> path.toString().endsWith(".2dr"))
-                    .forEach(path -> {
-                        regionFileNames.add(path.getFileName().toString());
-                    });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return regionFileNames;
-    }
 
     public static double bytesToGB(long bytes) {
         double kilobytes = bytes / 1024.0;

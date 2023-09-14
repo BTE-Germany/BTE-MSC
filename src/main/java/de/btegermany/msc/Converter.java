@@ -34,35 +34,6 @@ public class Converter {
         }
     }
 
-    public static double[] regionFile2dToMcCoords(String fileName) {
-        int regionX;
-        int regionZ;
-
-        String[] parts = fileName.split("\\.");
-        regionX = Integer.parseInt(parts[0]);
-        regionZ = Integer.parseInt(parts[1]);
-
-        int chunkX = regionX << 5;
-        int chunkZ = regionZ << 5;
-        double x = (double) (chunkX << 4);
-        double z = (double) (chunkZ << 4);
-
-        return new double[]{x, z};
-    }
-
-    // 3dregionfile to 2dregionfile
-    /*
-    public static String regionFile3dTo2d(String fileName) {
-        System.out.println(fileName);
-        String[] parts = fileName.split("\\.");
-        int regionX = (int) Math.floor(Double.parseDouble(parts[0]));
-        int regionZ = (int) Math.floor(Double.parseDouble(parts[2]));
-
-        return (regionX/2)+"."+(regionZ/2)+".2dr";
-    }
-
-     */
-
     public static String regionFile3dTo2d(String fileName) {
 
         String[] parts = fileName.split("\\.");
