@@ -275,16 +275,19 @@ public class Analyzer extends SwingWorker<Void, Integer> {
      */
     private void initialLoad(JComboBox analyzeCriteriaDropdown, ArrayList<String> foundLocationsList) {
         // extract osm-location-data.bin before analyzing
-        try (InputStream inputStream = MSC.class.getResourceAsStream("/osm-location-data.bin")) {
-            try (FileOutputStream outputStream = new FileOutputStream("osm-location-data.bin")) {
-                int read;
-                byte[] bytes = new byte[1024];
-                while ((read = inputStream.read(bytes)) != -1) {
-                    outputStream.write(bytes, 0, read);
+        File osmLocationData = new File("osm-location-data.bin");
+        if(!osmLocationData.exists()) {
+            try (InputStream inputStream = MSC.class.getResourceAsStream("/osm-location-data.bin")) {
+                try (FileOutputStream outputStream = new FileOutputStream(osmLocationData)) {
+                    int read;
+                    byte[] bytes = new byte[1024];
+                    while ((read = inputStream.read(bytes)) != -1) {
+                        outputStream.write(bytes, 0, read);
+                    }
                 }
+            } catch (IOException e) {
+                throw new AnalyzerException("osm-location-data.bin cannot be extracted. Please report this to the BTE Team.");
             }
-        } catch (IOException e) {
-            throw new AnalyzerException("osm-location-data.bin cannot be extracted. Please report this to the BTE Team.");
         }
         for (String regionFileName : getRegionFileNames()) {
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
