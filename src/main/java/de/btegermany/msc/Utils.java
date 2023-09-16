@@ -5,7 +5,9 @@ import de.btegermany.msc.geo.GeoLocation;
 import de.btegermany.msc.geo.ReverseGeocoder;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,6 +15,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.logging.Level;
+
 
 public class Utils {
 
@@ -78,11 +81,10 @@ public class Utils {
 
     public static GeoLocation getOfflineLocation(double lat, double lon) {
         File osmLocationData = null;
-        try {
-            osmLocationData = new File(MSC.class.getResource("/osm-location-data.bin").toURI());
-        } catch (URISyntaxException e) {
-            throw new AnalyzerException("osm-location-data.bin file is missing");
-        }
+
+        //osmLocationData = new File(MSC.class.getResource("/osm-location-data.bin").toURI()); // does not work outside intellij
+        osmLocationData = new File("./osm-location-data.bin");
+
         try (ReverseGeocoder rgc = new ReverseGeocoder(osmLocationData.getAbsolutePath())) {
             GeoLocation location = new GeoLocation(lat, lon);
             StringBuilder cityBuilder = new StringBuilder();

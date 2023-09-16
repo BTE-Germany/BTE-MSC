@@ -1,5 +1,6 @@
 package de.btegermany.msc;
 
+import de.btegermany.msc.exceptions.AnalyzerException;
 import de.btegermany.msc.gui.*;
 import net.buildtheearth.terraminusminus.projection.OutOfProjectionBoundsException;
 
@@ -8,7 +9,9 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -271,6 +274,18 @@ public class Analyzer extends SwingWorker<Void, Integer> {
         Gets location from region files and adds them to the foundLocationsList
      */
     private void initialLoad(JComboBox analyzeCriteriaDropdown, ArrayList<String> foundLocationsList) {
+        // extract osm-location-data.bin before analyzing
+        try (InputStream inputStream = MSC.class.getResourceAsStream("/osm-location-data.bin")) {
+            try (FileOutputStream outputStream = new FileOutputStream("osm-location-data.bin")) {
+                int read;
+                byte[] bytes = new byte[1024];
+                while ((read = inputStream.read(bytes)) != -1) {
+                    outputStream.write(bytes, 0, read);
+                }
+            }
+        } catch (IOException e) {
+            throw new AnalyzerException("osm-location-data.bin cannot be extracted. Please report this to the BTE Team.");
+        }
         for (String regionFileName : getRegionFileNames()) {
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
             if ((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
@@ -285,6 +300,7 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                     continue;
                     //throw new AnalyzerException("Out of Projection Bounds: "+ xy[0]+","+xy[1] +" This should not happen. Please report this to the BTE Team.");
                 }
+                InputStream inputStream = MSC.class.getResourceAsStream("/osm-location-data.bin");
                 String location = null;
                 switch (analyzeCriteriaDropdown.getSelectedItem().toString()) {
                     case "Continent":
@@ -300,7 +316,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                         location = Utils.getOfflineLocation(latLon[0], latLon[1]).getCity();
                         break;
                 }
-
                 //System.out.println(location);
 
 
