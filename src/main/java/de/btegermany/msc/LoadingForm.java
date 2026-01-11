@@ -15,7 +15,10 @@ public class LoadingForm {
     public JScrollPane progressLogScrollPane;
 
     public LoadingForm(JFrame frame, Analyzer analyzer) {
-        progressFinishedButton.setVisible(false);
+        if (progressFinishedButton != null) {
+            progressFinishedButton.setVisible(false);
+        }
+
         SwingUtilities.invokeLater(() -> {
             try {
                 analyzer.execute();
@@ -32,12 +35,15 @@ public class LoadingForm {
             }
         });
 
-        progressFinishedButton.addActionListener(e -> {
-            JComponent comp = (JComponent) e.getSource();
-            Window win = SwingUtilities.getWindowAncestor(comp);
-            win.dispose();
-            //frame.dispose();
-        });
+        if (progressFinishedButton != null) {
+            progressFinishedButton.addActionListener(e -> {
+                JComponent comp = (JComponent) e.getSource();
+                Window win = SwingUtilities.getWindowAncestor(comp);
+                if (win != null) {
+                    win.dispose();
+                }
+            });
+        }
     }
 
 
