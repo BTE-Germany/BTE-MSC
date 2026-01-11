@@ -9,7 +9,6 @@ public class Converter {
 
     // VA: r . 5621 . -8513 .mca
     // CC: 13133 . 0 . -19714 .3dr
-    // TODO: skip small region to avoid outofboundsexceptions
     public static double[] regionFileToMcCoords(String fileName) {
         int regionX;
         int regionZ;
@@ -25,8 +24,8 @@ public class Converter {
 
         int chunkX = regionX << 5;
         int chunkZ = regionZ << 5;
-        double x = (double) (chunkX << 4);
-        double z = (double) (chunkZ << 4);
+        double x = (chunkX << 4);
+        double z = (chunkZ << 4);
         if(fileName.startsWith("r.")) {
             return new double[]{x, z};
         }else{

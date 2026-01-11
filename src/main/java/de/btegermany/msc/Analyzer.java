@@ -442,7 +442,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
 
         for (String regionFileName : getRegionFileNames()) {
             double[] xy = Converter.regionFileToMcCoords(regionFileName);
-            if ((xy[0] > 2000 || xy[0] < -2000) && (xy[1] > 2000 || xy[1] < -2000)) {
                 regionFileSize++;
                 double[] latLon = null;
                 try {
@@ -503,7 +502,6 @@ public class Analyzer extends SwingWorker<Void, Integer> {
                 loadingForm.progressBar.setValue(foundLocationsList.size());
 
             }
-        }
 
         return outOfBoundsRegions;
     }
