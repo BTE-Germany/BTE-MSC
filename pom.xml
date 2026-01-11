@@ -23,6 +23,11 @@
             <id>papermc-repo</id>
             <url>https://papermc.io/repo/repository/maven-public/</url>
         </repository>
+        <repository>
+            <id>smyler-releases</id>
+            <name>Smyler's maven repository</name>
+            <url>https://maven.smyler.net/releases/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -42,9 +47,9 @@
             <version>3.0</version>
         </dependency>
         <dependency>
-            <groupId>com.github.SmylerMC</groupId>
-            <artifactId>terraminusminus</artifactId>
-            <version>feature~bukkit-5907790da3-1</version>
+            <groupId>net.buildtheearth.terraminusminus</groupId>
+            <artifactId>terraminusminus-core</artifactId>
+            <version>2.0.0-1.21.4</version>
         </dependency>
     </dependencies>
     <build>
