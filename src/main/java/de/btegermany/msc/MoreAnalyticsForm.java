@@ -1,6 +1,5 @@
 package de.btegermany.msc;
 
-import com.formdev.flatlaf.intellijthemes.FlatOneDarkIJTheme;
 import de.btegermany.msc.gui.LocationListEntry;
 import org.knowm.xchart.PieChart;
 import org.knowm.xchart.PieChartBuilder;
@@ -10,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Locale;
 
 public class MoreAnalyticsForm {
